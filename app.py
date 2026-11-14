@@ -38,7 +38,7 @@ def et(variable):
 # Carga y cálculos con caché (la depuración ya se hizo en src/limpieza.py)
 # ----------------------------------------------------------------------
 BASE_DIR = Path(__file__).parent
-RUTA_DATOS = BASE_DIR / "whr_estandarizado.csv"  # O el nombre exacto de tu archivo CSV
+RUTA_DATOS = BASE_DIR / "whr_limpio.csv"
 @st.cache_data
 def cargar_datos():
     return pd.read_csv(RUTA_DATOS)
