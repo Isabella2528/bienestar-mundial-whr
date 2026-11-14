@@ -49,7 +49,7 @@ def evaluar_k_cache(X, ks):
     return evaluar_k(X, list(ks))
 
 
-datos = cargar_datos()
+datos = cargar_datos(RUTA_DATOS)
 anios = sorted(datos["anio"].unique().tolist(), reverse=True)
 
 # Selecciones del usuario que deben sobrevivir al cambio de sección
