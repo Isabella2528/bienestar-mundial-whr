@@ -40,8 +40,8 @@ def et(variable):
 BASE_DIR = Path(__file__).parent
 RUTA_DATOS = BASE_DIR / "whr_limpio.csv"
 @st.cache_data
-def cargar_datos():
-    return pd.read_csv(RUTA_DATOS)
+def cargar_datos(ruta):
+    return pd.read_csv(ruta)
 
 
 @st.cache_data(show_spinner=False)
