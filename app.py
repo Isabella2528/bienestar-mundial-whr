@@ -13,7 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.analisis import (ETIQUETAS, VARS_MODELO, VARS_SUPLEMENTARIAS, ajustar_kmeans,
+from analisis import (ETIQUETAS, VARS_MODELO, VARS_SUPLEMENTARIAS, ajustar_kmeans,
                           componentes_sugeridos, ejecutar_acp, estandarizar, evaluar_k,
                           nombrar_grupos, perfil_grupos, perfil_relativo,
                           silueta_por_observacion)
