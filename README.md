@@ -2,10 +2,9 @@
 
 **ACP y K-Means sobre los factores del World Happiness Report 2025**
 
-Taller Machine Learning 
-Pontificia Universidad Javeriana Cali
+Taller individual · Machine Learning aplicado a Economía y Finanzas · Pontificia Universidad Javeriana Cali
 
-- **Autor:** Isabella Ruano Herrera
+- **Autor:** _[tu nombre]_
 - **Aplicación desplegada:** _[enlace de Streamlit Community Cloud]_
 - **Repositorio:** _[enlace de este repositorio]_
 

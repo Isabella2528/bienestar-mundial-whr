@@ -13,7 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from analisis import (ETIQUETAS, VARS_MODELO, VARS_SUPLEMENTARIAS, ajustar_kmeans,
+from src.analisis import (ETIQUETAS, VARS_MODELO, VARS_SUPLEMENTARIAS, ajustar_kmeans,
                           componentes_sugeridos, ejecutar_acp, estandarizar, evaluar_k,
                           nombrar_grupos, perfil_grupos, perfil_relativo,
                           silueta_por_observacion)
@@ -27,7 +27,7 @@ RUTA_REPORTE = BASE / "data" / "processed" / "reporte_limpieza.md"
 KS = tuple(range(2, 9))
 ENTRADA_CP = "Componentes principales seleccionados"
 ENTRADA_VAR = "Variables estandarizadas (las 6)"
-VARS_MODELO = VARS_MODELO + VARS_SUPLEMENTARIAS
+COLS_PERFIL = VARS_MODELO + VARS_SUPLEMENTARIAS
 
 
 def et(variable):
@@ -37,8 +37,6 @@ def et(variable):
 # ----------------------------------------------------------------------
 # Carga y cálculos con caché (la depuración ya se hizo en src/limpieza.py)
 # ----------------------------------------------------------------------
-BASE_DIR = Path(__file__).parent
-RUTA_DATOS = BASE_DIR / "whr_estandarizado.csv"  # O el nombre exacto de tu archivo CSV
 @st.cache_data
 def cargar_datos():
     return pd.read_csv(RUTA_DATOS)
@@ -132,7 +130,7 @@ def pagina_contexto():
         "las personas valoran su vida."
     )
     variables = pd.DataFrame({
-        "Variable": [et(v) for v in VARS_MODELO],
+        "Variable": [et(v) for v in COLS_PERFIL],
         "Rol en el análisis": ["Entra a ACP y K-Means"] * 6
         + ["Suplementaria: no entra al modelo, sirve para interpretar y validar"] * 2,
         "Qué es": [
@@ -187,25 +185,25 @@ def pagina_exploracion():
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Países", len(df))
     c2.metric("Variables del modelo", len(VARS_MODELO))
-    c3.metric("Valores faltantes", int(df[VARS_MODELO].isna().sum().sum()))
+    c3.metric("Valores faltantes", int(df[COLS_PERFIL].isna().sum().sum()))
     c4.metric("Año", int(anio))
 
     st.subheader("Estructura de la base")
     estructura = pd.DataFrame({
-        "Variable": [et(v) for v in VARS_MODELO],
-        "Tipo": [str(df[v].dtype) for v in VARS_MODELO],
+        "Variable": [et(v) for v in COLS_PERFIL],
+        "Tipo": [str(df[v].dtype) for v in COLS_PERFIL],
         "Rol": ["Modelo"] * len(VARS_MODELO) + ["Suplementaria"] * len(VARS_SUPLEMENTARIAS),
     })
     st.dataframe(estructura, hide_index=True)
 
     st.subheader("Estadísticas descriptivas")
-    desc = df[VARS_MODELO].describe().T.rename(index=ETIQUETAS).round(3)
+    desc = df[COLS_PERFIL].describe().T.rename(index=ETIQUETAS).round(3)
     st.dataframe(desc)
     st.caption("Las escalas difieren (el PIB llega cerca de 2 y la generosidad a 0,3), por eso se "
                "estandariza antes del ACP: así ninguna variable domina solo por su magnitud.")
 
     st.subheader("Distribución de una variable")
-    var = st.selectbox("Variable", VARS_MODELO, format_func=et)
+    var = st.selectbox("Variable", COLS_PERFIL, format_func=et)
     col1, col2 = st.columns(2)
     fig_h = px.histogram(df, x=var, nbins=25, labels={var: et(var)},
                          title=f"Distribución de {et(var)} ({anio})")
@@ -217,7 +215,7 @@ def pagina_exploracion():
 
     st.subheader("Matriz de correlaciones")
     incluir = st.checkbox("Incluir variables suplementarias", value=False)
-    cols = VARS_MODELO if incluir else VARS_MODELO
+    cols = COLS_PERFIL if incluir else VARS_MODELO
     corr = df[cols].corr()
     etq = [et(v) for v in cols]
     fig_c = px.imshow(corr.round(2).values, x=etq, y=etq, color_continuous_scale="RdBu_r",
@@ -238,7 +236,7 @@ def pagina_exploracion():
     )
 
     with st.expander("Ver la tabla de datos"):
-        st.dataframe(df[["pais", "ranking"] + VARS_MODELO].rename(columns=ETIQUETAS | {"pais": "País", "ranking": "Ranking"}),
+        st.dataframe(df[["pais", "ranking"] + COLS_PERFIL].rename(columns=ETIQUETAS | {"pais": "País", "ranking": "Ranking"}),
                      hide_index=True)
 
 
@@ -423,19 +421,19 @@ def pagina_kmeans():
     st.dataframe(ds.sort_values("Silueta").head(10).round(3), hide_index=True)
 
     st.subheader("4.4 Perfil de los grupos con las variables originales")
-    perfil = perfil_grupos(df, grupos, VARS_MODELO)
+    perfil = perfil_grupos(df, grupos, COLS_PERFIL)
     st.markdown("**Promedios por grupo (unidades originales):**")
     st.dataframe(perfil.rename(columns=ETIQUETAS).round(2))
 
-    rel = perfil_relativo(df, grupos, VARS_MODELO)
-    fig_r = px.imshow(rel.round(2).values, x=[et(v) for v in VARS_MODELO], y=list(rel.index),
+    rel = perfil_relativo(df, grupos, COLS_PERFIL)
+    fig_r = px.imshow(rel.round(2).values, x=[et(v) for v in COLS_PERFIL], y=list(rel.index),
                       color_continuous_scale="RdBu_r", color_continuous_midpoint=0, text_auto=True, aspect="auto",
                       title="Cada grupo frente al promedio global (en desviaciones estándar)")
     st.plotly_chart(fig_r)
     st.caption("Rojo: el grupo está por encima del promedio de los países; azul: por debajo. "
                "Las dos últimas columnas no se usaron para formar los grupos.")
 
-    var = st.selectbox("Comparar una variable entre grupos", VARS_MODELO, format_func=et)
+    var = st.selectbox("Comparar una variable entre grupos", COLS_PERFIL, format_func=et)
     fig_v = px.box(df.assign(Grupo=grupos), x="Grupo", y=var, points="all", hover_name="pais",
                    category_orders={"Grupo": orden}, labels={var: et(var)},
                    title=f"{et(var)} por grupo")
@@ -451,10 +449,10 @@ def pagina_kmeans():
     i = int(df.index[df["pais"] == pais][0])
     st.markdown(f"**{pais}** pertenece al **{grupos.iloc[i]}** (silueta {s[i]:.2f}).")
     comp = pd.DataFrame({
-        "Variable": [et(v) for v in VARS_MODELO],
-        pais: [df.loc[i, v] for v in VARS_MODELO],
-        f"Promedio {grupos.iloc[i]}": [perfil.loc[grupos.iloc[i], v] for v in VARS_MODELO],
-        "Promedio global": [df[v].mean() for v in VARS_MODELO],
+        "Variable": [et(v) for v in COLS_PERFIL],
+        pais: [df.loc[i, v] for v in COLS_PERFIL],
+        f"Promedio {grupos.iloc[i]}": [perfil.loc[grupos.iloc[i], v] for v in COLS_PERFIL],
+        "Promedio global": [df[v].mean() for v in COLS_PERFIL],
     })
     st.dataframe(comp.round(3), hide_index=True)
 
